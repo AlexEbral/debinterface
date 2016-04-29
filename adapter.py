@@ -13,7 +13,7 @@ class NetworkAdapter:
         'netmask': {'type': 'IP'},
         'network': {'type': 'IP'},
         'broadcast': {'type': 'IP'},
-        'gateway': {'type': 'IP'},
+        'gateway': {'type': str},
         'nameservers': {'type': list},
         'bridge-opts': {'type': dict},
         'addrFam': {'in': ['inet', 'inet6', 'ipx']},

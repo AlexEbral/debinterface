@@ -91,7 +91,8 @@ class InterfacesReader:
             elif sline[0] == 'netmask':
                 self._adapters[self._context].setNetmask(sline[1])
             elif sline[0] == 'gateway':
-                self._adapters[self._context].setGateway(sline[1])
+                ud = sline.pop(0)
+                self._adapters[self._context].setGateway(' '.join(sline))
             elif sline[0] == 'broadcast':
                 self._adapters[self._context].setBroadcast(sline[1])
             elif sline[0] == 'network':
