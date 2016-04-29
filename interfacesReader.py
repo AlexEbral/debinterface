@@ -101,7 +101,7 @@ class InterfacesReader:
                 sline.pop(0)
                 ifs = " ".join(sline)
                 self._adapters[self._context].replaceBropt(opt[1], ifs)
-            if sline[0] == 'nameservers' or sline[0] == 'dns-nameservers':
+            elif sline[0] == 'nameservers' or sline[0] == 'dns-nameservers':
                 ns = sline.pop(0)
                 self._adapters[self._context].setNameservers(sline)
             elif sline[0] == 'pre-up' or sline[0] == 'up' or sline[0] == 'post-up' or sline[0] == 'down' or sline[0] == 'pre-down' or sline[0] == 'post-down':
@@ -118,8 +118,10 @@ class InterfacesReader:
             else:
                 # store as if so as not to loose it
                 key = sline.pop(0)
-                if self._context and self._context in self._adapters:
+                try
                     self._adapters[self._context].setUnknown(key, ' '.join(sline))
+                except:
+                    pass
 
     def _read_auto(self, line):
         ''' Identify which adapters are flagged auto. '''
