@@ -15,6 +15,10 @@ class InterfacesReader:
     def adapters(self):
         return self._adapters
 
+    @property
+    def includes(self):
+        return self._include_list
+
     def parse_interfaces(self):
         ''' Read /etc/network/interfaces.  '''
         self._reset()
@@ -67,6 +71,7 @@ class InterfacesReader:
                     self._parse_details(line)
                 self._read_auto(line)
                 self._read_hotplug(line)
+                self._read_source(line)
 
     def _parse_iface(self, line):
         if line.startswith('iface'):
@@ -78,8 +83,9 @@ class InterfacesReader:
             self._adapters[self._context].setAddrFam(sline[2])
 
     def _parse_details(self, line):
-        if line[0].isspace() is True:
-            sline = line.split()
+        sline = line.split()
+        #if line[0].isspace() is True:
+        if not sline[0] in {'auto', 'iface', 'allow-auto', 'allow-hotplug', 'source'}:
             if sline[0] == 'address':
                 self._adapters[self._context].setAddress(sline[1])
             elif sline[0] == 'netmask':
@@ -95,12 +101,15 @@ class InterfacesReader:
                 sline.pop(0)
                 ifs = " ".join(sline)
                 self._adapters[self._context].replaceBropt(opt[1], ifs)
-            elif sline[0] == 'up' or sline[0] == 'down' or sline[0] == 'pre-up' or sline[0] == 'post-down':
+            if sline[0] == 'nameservers' or sline[0] == 'dns-nameservers':
+                ns = sline.pop(0)
+                self._adapters[self._context].setNameservers(sline)
+            elif sline[0] == 'pre-up' or sline[0] == 'up' or sline[0] == 'post-up' or sline[0] == 'down' or sline[0] == 'pre-down' or sline[0] == 'post-down':
                 ud = sline.pop(0)
                 cmd = ' '.join(sline)
-                if ud == 'up':
+                if ud == 'up' or ud == 'post-up':
                     self._adapters[self._context].appendUp(cmd)
-                elif ud == 'down':
+                elif ud == 'down' or ud == 'pre-down':
                     self._adapters[self._context].appendDown(cmd)
                 elif ud == 'pre-up':
                     self._adapters[self._context].appendPreUp(cmd)
@@ -108,7 +117,9 @@ class InterfacesReader:
                     self._adapters[self._context].appendPostDown(cmd)
             else:
                 # store as if so as not to loose it
-                self._adapters[self._context].setUnknown(sline[0], sline[1])
+                key = sline.pop(0)
+                if self._context and self._context in self._adapters:
+                    self._adapters[self._context].setUnknown(key, ' '.join(sline))
 
     def _read_auto(self, line):
         ''' Identify which adapters are flagged auto. '''
@@ -130,6 +141,12 @@ class InterfacesReader:
                 else:
                     self._hotplug_list.append(word)
 
+    def _read_source(self, line):
+        if line.startswith('source'):
+            sline = line.split()
+            sline.pop(0)
+            self._include_list.append(' '.join(sline))
+
     def _reset(self):
         # Initialize a place to store created networkAdapter objects.
         self._adapters = []
@@ -137,6 +154,7 @@ class InterfacesReader:
         # Keep a list of adapters that have the auto or allow-hotplug flags set.
         self._auto_list = []
         self._hotplug_list = []
+        self._include_list = []
 
         # Store the interface context.
         # This is the index of the adapters collection.

@@ -31,9 +31,15 @@ class Interfaces:
     def backup_path(self):
         return self._backup_path
 
+    @property
+    def includes(self):
+        return self._includes
+
     def updateAdapters(self):
         ''' (re)read interfaces file and save adapters '''
-        self._adapters = InterfacesReader(self._interfaces_path).parse_interfaces()
+        reader = InterfacesReader(self._interfaces_path)
+        self._adapters = reader.parse_interfaces()
+        self._includes  = reader.includes
         if not self._adapters:
             self._adapters = []
 

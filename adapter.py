@@ -14,9 +14,11 @@ class NetworkAdapter:
         'network': {'type': 'IP'},
         'broadcast': {'type': 'IP'},
         'gateway': {'type': 'IP'},
+        'nameservers': {'type': list},
         'bridge-opts': {'type': dict},
         'addrFam': {'in': ['inet', 'inet6', 'ipx']},
         'source': {'in': ['dhcp', 'static', 'loopback', 'manual', 'bootp', 'ppp', 'wvdial', 'dynamic', 'ipv4ll', 'v4tunnel']},
+        'includes': {'type': list},
         'hostapd': {}
     }
 
@@ -58,7 +60,10 @@ class NetworkAdapter:
             Raise socket.error on invalid IP
             Works for subnet masks too.
         '''
-        socket.inet_aton(ip)
+        try:
+            socket.inet_aton(ip)
+        except socket.error:
+            socket.inet_pton(socket.AF_INET6, ip)
 
     def setName(self, n):
         ''' Set the name option of an interface. '''
@@ -106,6 +111,18 @@ class NetworkAdapter:
 
         self.validateOne('network', self._valid['network'], w)
         self._ifAttributes['network'] = w
+
+    def setNameservers(self, n):
+        ''' Set the ipaddress of an interface. '''
+
+        self.validateOne('nameservers', self._valid['nameservers'], n)
+        self._ifAttributes['nameservers'] = n
+
+    def setIncludes(self, i):
+        self._ifAttributes['includes'] = i
+
+    def appendIncludes(self, i):
+        self._ifAttributes['includes'].append(i);
 
     def setAuto(self, t):
         ''' Set the option to autostart the interface. '''
@@ -245,7 +262,7 @@ class NetworkAdapter:
                 for key in options.keys():
                     if key == 'name':
                         self.setName(options[key])
-                    if key == 'addrFam':
+                    elif key == 'addrFam':
                         self.setAddrFam(options[key])
                     elif key == 'source':
                         self.setAddressSource(options[key])
