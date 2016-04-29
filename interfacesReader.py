@@ -118,7 +118,7 @@ class InterfacesReader:
             else:
                 # store as if so as not to loose it
                 key = sline.pop(0)
-                try
+                try:
                     self._adapters[self._context].setUnknown(key, ' '.join(sline))
                 except:
                     pass
