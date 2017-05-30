@@ -60,6 +60,7 @@ class Interfaces:
         return InterfacesWriter(
             self._adapters,
             self._interfaces_path,
+            self._includes,
             self._backup_path
         )
 

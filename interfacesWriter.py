@@ -12,16 +12,19 @@ class InterfacesWriter:
     _hotplug = Template('allow-hotplug $name\n')
     _iface = Template('iface $name $addrFam $source\n')
     _cmd = Template('\t$varient $value\n')
+    _nameservers = Template('\tdns-nameservers $value\n')
+    _source = Template('source $value\n')
 
     _addressFields = ['address', 'network', 'netmask', 'broadcast', 'gateway']
     _prepFields = ['pre-up', 'up', 'down', 'post-down']
     _bridgeFields = ['ports', 'fd', 'hello', 'maxage', 'stp']
 
-    def __init__(self, adapters, interfaces_path, backup_path=None):
+    def __init__(self, adapters, interfaces_path, includes, backup_path=None):
         ''' if backup_path is None => no backup '''
         self._adapters = adapters
         self._interfaces_path = interfaces_path
         self._backup_path = backup_path
+        self._includes = includes
 
     @property
     def adapters(self):
@@ -55,6 +58,9 @@ class InterfacesWriter:
         for adapter in self._adapters:
             # Get dict of details about the adapter.
             self._write_adapter(fileObj, adapter)
+        for include_path in self._includes:
+            d = dict(value=include_path)
+            fileObj.write(self._source.substitute(d))
 
     def _write_adapter(self, interfaces, adapter):
         try:
@@ -71,6 +77,7 @@ class InterfacesWriter:
         self._write_addressing(interfaces, adapter, ifAttributes)
         self._write_bridge(interfaces, adapter, ifAttributes)
         self._write_callbacks(interfaces, adapter, ifAttributes)
+        self._write_nameservers(interfaces, adapter, ifAttributes)
         self._write_unknown(interfaces, adapter, ifAttributes)
         interfaces.write("\n")
 
@@ -134,6 +141,15 @@ class InterfacesWriter:
                 # Keep going if a field isn't provided.
                 except KeyError:
                     pass
+
+    def _write_nameservers(self, interfaces, adapter, ifAttributes):
+        ''' Write nameservers '''
+        try:
+            nameservers_str = ' '.join(ifAttributes['nameservers'])
+            d = dict(value=nameservers_str)
+            interfaces.write(self._nameservers.substitute(d))
+        except (KeyError, ValueError):
+            pass
 
     def _write_unknown(self, interfaces, adapter, ifAttributes):
         ''' Write unknowns options '''
